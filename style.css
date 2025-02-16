@@ -1,0 +1,158 @@
+* {
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: none;
+  text-decoration: none;
+  box-sizing: border-box;
+  font-family: "Raleway", sans-serif;
+}
+
+body {
+  background-image: url("https://image.slidesdocs.com/responsive-images/background/blue-business-technology-atmosphere-internet-particles-powerpoint-background_056950da35__960_540.jpg");
+  background-size: cover;
+  background-position: center;
+  background-color: #ffffff99;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 250px;
+  background-color: #153c56;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
+  padding-top: 20px;
+  transition: width 0.3s;
+  z-index: 10;
+}
+
+nav ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+nav li {
+  margin-bottom: 15px;
+}
+
+nav a {
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 16px;
+  padding: 12px;
+  border-radius: 10px;
+  transition: background-color 0.3s;
+  text-decoration: none;
+}
+
+nav a:hover {
+  background-color: #0c5ec3;
+}
+
+.fas {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.logout {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+}
+
+main {
+  margin-left: 270px;
+  padding: 20px;
+  width: calc(100% - 270px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  margin: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+  padding: 50px;
+  width: 400px;
+}
+
+.btn-primary {
+  background-color: #1a73e8;
+  border-color: #1a73e8;
+  font-size: 16px;
+  padding: 10px;
+  width: 100%;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+.btn-primary:hover {
+  background-color: #0c5ec3;
+  border-color: #0c5ec3;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  width: 100%;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.form-group label {
+  font-weight: 600;
+}
+
+.form-control {
+  border-radius: 5px;
+  margin-bottom: 15px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.nav-item {
+  font-weight: 600;
+}
+
+/* Media Queries para móviles y tablets */
+@media (max-width: 768px) {
+  main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  nav {
+    width: 100%;
+    position: relative;
+    box-shadow: none;
+    text-decoration: none;
+  }
+
+  nav a {
+    justify-content: center;
+  }
+
+  .btn-primary,
+  .btn-danger {
+    font-size: 14px;
+  }
+}
