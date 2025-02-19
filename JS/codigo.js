@@ -6,183 +6,290 @@ let userId;
 
 function inicio() {
   ocultarSecciones();
-  if (localStorage.getItem("token")) {
-      mostrarMenu("logeado");
+  if (
+    localStorage.getItem("token") != null &&
+    localStorage.getItem("token") != undefined
+  ) {
+    mostrarMenu("logueado");
+    ruteo.push("/actividad");
   } else {
-      mostrarMenu("deslogeado");
+    mostrarMenu("deslogueado");
+    ruteo.push("/ingresar");
   }
 
+  document.querySelector("#ingresar").style.display = "block";
   ruteo.addEventListener("ionRouteDidChange", mostrarPagina);
   getCountries();
-  botones();
 }
 
 document.addEventListener("DOMContentLoaded", inicio);
 
-function botones() {
-  ruteo.addEventListener("ionRouteWillChange", mostrarPagina);
-  document
-    .querySelector("#btnRegistroMenu")
-    .addEventListener("click", mostrarPagina);
-  document
-    .querySelector("#btnIngreso")
-    .addEventListener("click", mostrarPagina);
-  // document.querySelector("#btnInicio").addEventListener("click", mostrarPagina);
-}
-
-// Ocultar todas las páginas
 function ocultarSecciones() {
-  document.querySelectorAll("ion-page").forEach(seccion => {
-      seccion.style.display = "none"; 
+  document.querySelectorAll("ion-page").forEach((seccion) => {
+    seccion.style.display = "none";
   });
 }
 
-// Mostrar menú según login
 function mostrarMenu(clase) {
-  document.querySelectorAll("ion-menu ion-item").forEach(opcion => {
-      opcion.style.display = "none";
-      if (opcion.classList.contains(clase)) {
-          opcion.style.display = "inline";
-      }
+  let opcionesMenu = document.querySelectorAll("ion-menu ion-item");
+  opcionesMenu.forEach((opcion) => {
+    opcion.style.display = "none";
+    if (opcion.classList.contains(clase)) {
+      opcion.style.display = "inline";
+    }
   });
 }
 
-// Obtener países
 const getCountries = async () => {
   try {
-      const response = await fetch(apiBase + "/paises.php");
-      const json = await response.json();
-      printCountries(json);
+    const response = await fetch(apiBase + "/paises.php");
+    const json = await response.json();
+    printCountries(json);
   } catch (error) {
-      console.log(error.message);
+    console.log(error.message);
   }
 };
 
-// Mostrar países en <ion-select>
 const printCountries = (countries) => {
   const select = document.querySelector("#txtPais");
-  select.innerHTML = "";  // Limpiar opciones previas
-  countries.paises.forEach(country => {
-      const option = document.createElement("ion-select-option");
-      option.textContent = country.name;
-      option.value = country.id;
-      select.appendChild(option);
+  select.innerHTML = ""; // Limpiar opciones previas
+  countries.paises.forEach((country) => {
+    const option = document.createElement("ion-select-option");
+    option.textContent = country.name;
+    option.value = country.id;
+    select.appendChild(option);
   });
 };
 
 // Manejo de rutas
 function mostrarPagina(event) {
   ocultarSecciones();
-  let paginaDestino = event.detail.to;  // Ruta a la que se navega
+  let paginaDestino = event.detail.to; // Ruta a la que se navega
 
   switch (paginaDestino) {
-      case "/registro":
-          getCountries();
-          document.querySelector("#registro").style.display = "block";
-          break;
-      case "/ingresar":
-          document.querySelector("#ingresar").style.display = "block";
-          break;
-      case "/agregar-sesion":
-          document.querySelector("#registroactividades").style.display = "block";
-          break;
-      default:
-          ruteo.push("/ingresar"); // Si la ruta no existe, redirigir a login
+    case "/ingresar":
+      document.querySelector("#ingresar").style.display = "block";
+      break;
+    case "/registro":
+      getCountries();
+      document.querySelector("#registro").style.display = "block";
+      break;
+    case "/agregar-sesion":
+      actividades();
+      document.querySelector("#registroactividades").style.display = "block";
+      break;
+    default:
+      localStorage.clear();
+      mostrarMenu("deslogueado");
+      ruteo.push("/ingresar");
   }
 }
 
 // Registrar usuario
-const register = async () => {
+async function register() {
   try {
-      let username = document.querySelector("#txtUsuario").value.trim();
-      let password = document.querySelector("#txtPassword").value.trim();
-      let country = document.querySelector("#txtPais").value.trim();
+    let usuario = document.querySelector("#txtUsuario").value.trim();
+    let password = document.querySelector("#txtPassword").value.trim();
+    let idPais = document.querySelector("#txtPais").value;
 
-      if (!username || !password || !country) throw new Error("Todos los campos son obligatorios");
+    if (!usuario || !password || !idPais)
+      throw new Error("Todos los campos son obligatorios");
 
-      let user = { username, password, country };
-      const response = await fetch(apiBase + "/usuarios.php", {
-          method: "POST",
-          headers: { "Content-type": "application/json" },
-          body: JSON.stringify(user),
-      });
+    let user = { usuario, password, idPais };
+    const response = await fetch(apiBase + "/usuarios.php", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(user),
+    });
 
-      const json = await response.json();
+    const json = await response.json();
 
-      if (!json.error) {
-          vermensaje("Registro exitoso");
-          jwt = json.apiKey;
-          userId = json.id;
-          limpiarcamposRegistro();
-      } else {
-          vermensaje(json.mensaje);
-      }
+    if (json.codigo == 200) {
+      alert("Registro exitoso");
+      jwt = json.apiKey;
+      userId = json.id;
+      localStorage.setItem("token", json.apiKey);
+      limpiarcamposRegistro();
+
+      setTimeout(() => {
+        mostrarMenu("logueado");
+        document.querySelector("#registroactividades").style.display = "block";
+        ruteo.push("/actividad");
+      }, 1000);
+    } else {
+      vermensaje(json.mensaje);
+    }
   } catch (error) {
-      vermensaje(error.message);
+    vermensaje(error.message);
   }
-};
+}
 
-// Login usuario
-const login = async () => {
+async function login() {
   try {
-      let username = document.querySelector("#tNombre").value.trim();
-      let password = document.querySelector("#tPassword").value.trim();
+    let usuario = document.querySelector("#tNombre").value.trim();
+    let password = document.querySelector("#tPassword").value.trim();
 
-      if (!username || !password) throw new Error("Todos los campos son obligatorios");
+    if (!usuario || !password)
+      throw new Error("Todos los campos son obligatorios");
 
-      let user = { username, password };
+    let user = { usuario, password };
 
-      const response = await fetch(apiBase + "/usuarios.php", {
-          method: "POST",
-          headers: { "Content-type": "application/json" },
-          body: JSON.stringify(user),
-      });
+    const response = await fetch(apiBase + "/login.php", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(user),
+    });
 
-      const json = await response.json();
+    const json = await response.json();
 
-      if (!json.error) {
-          vermensaje("Inicio de sesión exitoso");
-          jwt = json.apiKey;
-          userId = json.id;
-          localStorage.setItem("token", json.apiKey);
-          limpiarcamposlogin();
-          document.querySelector("#registroactividades").style.display = "block";
-      } else {
-          vermensaje(json.mensaje);
-      }
+    if (json.codigo == 200) {
+      jwt = json.apiKey;
+      userId = json.id;
+      localStorage.setItem("token", json.apiKey);
+      limpiarcamposlogin();
+
+      setTimeout(() => {
+        alert("Inicio de sesión exitoso");
+        mostrarMenu("logueado");
+        document.querySelector("#registroactividades").style.display = "block";
+        ruteo.push("/actividad");
+      }, 1000);
+    } else {
+      vermensaje(json.mensaje);
+    }
   } catch (error) {
-      vermensaje(error.message);
+    vermensaje(error.message);
   }
-};
+}
 
-// Limpia campos después de registro
 function limpiarcamposRegistro() {
   document.querySelector("#txtUsuario").value = "";
   document.querySelector("#txtPassword").value = "";
 }
 
-// Limpia campos después de login
 function limpiarcamposlogin() {
   document.querySelector("#tNombre").value = "";
   document.querySelector("#tPassword").value = "";
 }
 
-// Muestra mensaje en pantalla
 function vermensaje(mensaje, tiempo = 1500) {
   let parrafo = document.querySelector("#messages");
   if (!parrafo) {
-      parrafo = document.createElement("p");
-      parrafo.setAttribute("id", "messages");
-      parrafo.setAttribute("class", "mt-2");
-      let btnRegistrarse = document.querySelector("#btnRegistrarse");
-      btnRegistrarse.parentNode.appendChild(parrafo);
+    parrafo = document.createElement("p");
+    parrafo.setAttribute("id", "messages");
+    parrafo.setAttribute("class", "mt-2");
+    let btnRegistrarse = document.querySelector("#btnRegistrarse");
+    btnRegistrarse.parentNode.appendChild(parrafo);
   }
   parrafo.innerHTML = mensaje;
   setTimeout(() => {
-      parrafo.remove();
+    parrafo.remove();
   }, tiempo);
 }
 
-// Evento botones
 document.querySelector("#btnRegistrarse").addEventListener("click", register);
 document.querySelector("#btnIngresar").addEventListener("click", login);
+document
+  .querySelector("#btnRegistrarActividad")
+  .addEventListener("click", registrarActividad);
+
+function cerrarMenu() {
+  const menu = document.querySelector("ion-menu");
+  menu.close(); // Cierra el menú
+}
+
+function cerrarSesion() {
+  jwt = null;
+  userId = null;
+}
+
+async function actividades() {
+  try {
+    const response = await fetch(apiBase + "/actividades.php", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: "a5d01b65e62758ea898c55338ee50f6e",
+        iduser: 3500,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Error en la solicitud");
+    }
+    const json = await response.json();
+    mostrarActividades(json);
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+const mostrarActividades = (actividades) => {
+  const select = document.querySelector("#actividad");
+
+  select.innerHTML = "";
+
+  actividades.forEach((actividad) => {
+    const option = document.createElement("ion-select-option");
+    option.text = actividad.name;
+    option.value = actividad.id;
+    select.appendChild(option);
+  });
+};
+
+const sesiones = [];
+
+async function registrarActividad() {
+  let idActividad = document.querySelector("#actividad").value;
+  let fecha = document.querySelector("#fecha").value;
+  let tiempo = document.querySelector("#tiempo").value;
+
+  if (!idActividad) {
+    throw new Error("Seleccionar una actividad");
+  }
+  if (!fecha) {
+    throw new Error("Ingresar una fecha");
+  }
+  if (!tiempo) {
+    throw new Error("Ingresar una duracion");
+  }
+
+  const nuevaActividad = {
+    idActividad: sesiones.length + 1,
+    idUsuario: userId,
+    tiempo: parseInt(tiempo),
+    fecha: fecha,
+  };
+
+  try {
+    const response = await fetch(
+      "https://movetrack.develotion.com/registro.php",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: "2dd3d4c779d95ed85a9db8c24db952da",
+          "User-ID": userId,
+        },
+        body: JSON.stringify(nuevaActividad),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Error en la solicitud");
+    }
+
+    const result = await response.json();
+    vermensaje("Actividad registrada");
+    sesiones.push(nuevaActividad);
+    limpiarCamposRegistroActividades();
+  } catch (error) {
+    vermensaje(error.message);
+  }
+}
+
+function limpiarCamposRegistroActividades() {
+  document.querySelector("#actividad").value = "";
+  document.querySelector("#fecha").value = "";
+  document.querySelector("#tiempo").value = "";
+}
