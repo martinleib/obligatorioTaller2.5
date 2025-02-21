@@ -1,0 +1,22 @@
+{
+  "name": "solucionpractico3",
+  "version": "1.0.0",
+  "description": "App para realizar pedidos",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Pedidos"
+  ],
+  "author": "Liliana Pino",
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^7.0.1",
+    "@capacitor/core": "^7.0.1",
+    "@capacitor/geolocation": "^7.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.1"
+  }
+}
