@@ -179,7 +179,6 @@ function mostrarPagina(event) {
   }
 }
 
-// REGISTRO
 async function register() {
   try {
     let usuario = document.querySelector("#txtUsuario").value.trim();
@@ -219,7 +218,6 @@ async function register() {
   }
 }
 
-//LOGIN
 async function login() {
   try {
     let usuario = document.querySelector("#tNombre").value.trim();
@@ -283,7 +281,6 @@ function vermensaje(mensaje, tiempo = 1500) {
   toast.present();
 }
 
-//BOTONES
 document.querySelector("#btnRegistrarse").addEventListener("click", register);
 document.querySelector("#btnIngresar").addEventListener("click", async () => {
   await login();
@@ -314,7 +311,6 @@ function cerrarMenu() {
   menu.close();
 }
 
-//OBTENER ACTIVIDADES
 let savedActivities = null;
 async function getActividades() {
   console.log("getActividades() called");
@@ -342,7 +338,6 @@ async function getActividades() {
     return [];
   }
 }
-
 
 const showActivitiesSelect = (actividades) => {
   const select = document.querySelector("#selectActividades");
@@ -415,7 +410,7 @@ async function registrarActividad() {
     console.log(`Fecha de hoy: ${fechaHoy}`);
 
     if (fechaSelec.getTime() > fechaHoy.getTime()) {
-      throw new Error("La fecha no puede ser posterior al dia de hoy");
+      throw new Error("La fecha no puede ser posterior a hoy");
     }
 
     const nuevaActividad = {
@@ -507,7 +502,7 @@ async function getActividadName(id) {
 }
 
 async function eliminarRegistro(id) {
-  if (confirm("¿Seguro que quieres eliminar este registro?")) {
+  if (confirm("¿Seguro que querés eliminar este registro?")) {
     try {
       console.log(`Eliminando registro con ID: ${id}`);
 
@@ -563,18 +558,22 @@ function calcularTiempoTotal() {
 
 function calcularTiempoDiario() {
   const fechaHoy = new Date();
-  const fechaActual = fechaHoy.toISOString().split("T")[0];
-  const sesionesHoy = sesiones.filter((sesion) => sesion.fecha === fechaHoy);
+  fechaHoy.setHours(0, 0, 0, 0)
+  const fechaHoyString = fechaHoy.toISOString().split('T')[0];
+
   let tiempoDiario = 0;
 
-  for (let i = 0; i < sesionesHoy.length; i++) {
-    tiempoDiario += sesionesHoy[i].tiempo;
+  for (let sesion of sesiones) {
+    if (sesion.fecha == fechaHoyString) {
+      tiempoDiario += sesion.tiempo;
+    }
   }
-  console.log(tiempoDiario);
+
   return tiempoDiario;
 }
 
-function mostrarInforme() {
+async function mostrarInforme() {
+  await getSesiones();
   const tiempoTotal = calcularTiempoTotal();
   const tiempoDiario = calcularTiempoDiario();
 
