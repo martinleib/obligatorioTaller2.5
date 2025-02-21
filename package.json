@@ -1,20 +1,20 @@
 {
-  "name": "solucionpractico3",
+  "name": "obligatoriotaller2.5",
   "version": "1.0.0",
-  "description": "App para realizar pedidos",
+  "description": "App para registrar sesiones de ejercicio",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "Pedidos"
-  ],
-  "author": "Liliana Pino",
+  "repository": {
+    "type": "git",
+    "url": "github.com/martinleib/obligatorioTaller2.5"
+  },
+  "author": "Martin Leib y Camila Borrelli",
   "license": "ISC",
   "dependencies": {
     "@capacitor/android": "^7.0.1",
-    "@capacitor/core": "^7.0.1",
-    "@capacitor/geolocation": "^7.1.0"
+    "@capacitor/core": "^7.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.1"

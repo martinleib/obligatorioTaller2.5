@@ -461,6 +461,8 @@ async function printRegisteredActivities(filteredSesiones = null) {
 
   const sesionesToPrint = filteredSesiones || sesiones;
 
+  const ionList = document.createElement("ion-list");
+
   for (let i = 0; i < sesionesToPrint.length; i++) {
     const sesion = sesionesToPrint[i];
     console.log(`Buscando nombre de actividad con ID: ${sesion.idActividad}`);
@@ -558,8 +560,8 @@ function calcularTiempoTotal() {
 
 function calcularTiempoDiario() {
   const fechaHoy = new Date();
-  fechaHoy.setHours(0, 0, 0, 0)
-  const fechaHoyString = fechaHoy.toISOString().split('T')[0];
+  fechaHoy.setHours(0, 0, 0, 0);
+  const fechaHoyString = fechaHoy.toISOString().split("T")[0];
 
   let tiempoDiario = 0;
 
