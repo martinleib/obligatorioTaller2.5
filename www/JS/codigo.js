@@ -285,16 +285,29 @@ function vermensaje(mensaje, tiempo = 1500) {
 
 //BOTONES
 document.querySelector("#btnRegistrarse").addEventListener("click", register);
-document.querySelector("#btnIngresar").addEventListener("click", login);
+document.querySelector("#btnIngresar").addEventListener("click", async () => {
+  await login();
+  activitiesLoaded = false;
+});
 document
   .querySelector("#btnRegistrarActividad")
-  .addEventListener("click", registrarActividad);
+  .addEventListener("click", async () => {
+    await registrarActividad();
+    activitiesLoaded = false;
+  });
+document.querySelector("#verRegistros").addEventListener("click", async () => {
+  await printRegisteredActivities();
+});
 document
-  .querySelector("#verRegistros")
-  .addEventListener("click", printRegisteredActivities);
-document.querySelector("#btnLastWeek").addEventListener("click", lastWeek);
-document.querySelector("#btnLastMonth").addEventListener("click", lastMonth);
-// document.querySelector("#btnAll").addEventListener("click", showAll);
+  .querySelector("#btnLastWeek")
+  .addEventListener("click", filterLastWeek);
+document
+  .querySelector("#btnLastMonth")
+  .addEventListener("click", filterLastMonth);
+document.querySelector("#btnAll").addEventListener("click", async () => {
+  activitiesLoaded = false;
+  await printRegisteredActivities();
+});
 
 function cerrarMenu() {
   const menu = document.querySelector("ion-menu");
@@ -302,8 +315,14 @@ function cerrarMenu() {
 }
 
 //OBTENER ACTIVIDADES
+let savedActivities = null;
 async function getActividades() {
   console.log("getActividades() called");
+  if (savedActivities) {
+    console.log("retornando actividades guardadas");
+    return savedActivities;
+  }
+
   try {
     const response = await fetch(apiBase + "/actividades.php", {
       method: "GET",
@@ -316,12 +335,14 @@ async function getActividades() {
     const actividades = await response.json();
     console.log(actividades);
     showActivitiesSelect(actividades.actividades);
-    return actividades.actividades;
+    savedActivities = actividades.actividades;
+    return savedActivities;
   } catch (error) {
     console.log(error.message);
     return [];
   }
 }
+
 
 const showActivitiesSelect = (actividades) => {
   const select = document.querySelector("#selectActividades");
@@ -429,16 +450,24 @@ async function registrarActividad() {
   }
 }
 
-async function printRegisteredActivities() {
+let activitiesLoaded = false;
+async function printRegisteredActivities(filteredSesiones = null) {
+  if (activitiesLoaded && !filteredSesiones) return;
+
   console.log("Obteniendo las sesiones del usuario...");
-  await getSesiones();
-  console.log("Sesiones obtenidas:", sesiones);
+  if (!filteredSesiones) {
+    await getSesiones();
+    console.log("Sesiones obtenidas:", sesiones);
+  }
 
   const listContainer = document.querySelector("#list-actividades");
   listContainer.innerHTML = "";
   isListPrinted = true;
 
-  for (const sesion of sesiones) {
+  const sesionesToPrint = filteredSesiones || sesiones;
+
+  for (let i = 0; i < sesionesToPrint.length; i++) {
+    const sesion = sesionesToPrint[i];
     console.log(`Buscando nombre de actividad con ID: ${sesion.idActividad}`);
     let actividadName = await getActividadName(sesion.idActividad);
     console.log(`Actividad encontrada: ${actividadName}`);
@@ -466,12 +495,13 @@ async function printRegisteredActivities() {
     listItem.setAttribute("data-id", sesion.id);
     listContainer.appendChild(listItem);
   }
+
+  activitiesLoaded = true;
 }
 
 async function getActividadName(id) {
   console.log(`Obteniendo actividad con ID: ${id}`);
   const actividades = await getActividades();
-  console.log("Actividades obtenidas:", actividades);
   const actividad = actividades.find((act) => act.id === id);
   return actividad ? actividad.nombre : "Actividad no encontrada";
 }
@@ -497,13 +527,9 @@ async function eliminarRegistro(id) {
         throw new Error("Error al eliminar el registro");
       }
 
-      const itemToRemove = document.querySelector(
-        `.activity-item[data-id="${id}"]`
-      );
-      if (itemToRemove) itemToRemove.remove();
-
       await getSesiones();
-      printRegisteredActivities();
+      activitiesLoaded = false;
+      await printRegisteredActivities();
       mostrarInforme();
       console.log(`Registro con ID ${id} eliminado correctamente`);
     } catch (error) {
@@ -511,11 +537,9 @@ async function eliminarRegistro(id) {
     }
   }
 }
-
 async function getActividadImage(id) {
   console.log(`Obteniendo actividad con ID: ${id}`);
   const actividades = await getActividades();
-  console.log("Actividades obtenidas:", actividades);
   const actividad = actividades.find((act) => act.id === id);
 
   return actividad
@@ -538,7 +562,8 @@ function calcularTiempoTotal() {
 }
 
 function calcularTiempoDiario() {
-  const fechaHoy = new Date().toISOString().split("T")[0];
+  const fechaHoy = new Date();
+  const fechaActual = fechaHoy.toISOString().split("T")[0];
   const sesionesHoy = sesiones.filter((sesion) => sesion.fecha === fechaHoy);
   let tiempoDiario = 0;
 
@@ -561,103 +586,28 @@ function mostrarInforme() {
   ).textContent = `Tiempo total entrenado hoy: ${tiempoDiario} minutos`;
 }
 
-async function lastWeek() {
-  let sesionesLastWeek = [];
+async function filterLastWeek() {
   const fechaHoy = new Date();
   const fecha1semana = new Date(fechaHoy);
-
   fecha1semana.setDate(fechaHoy.getDate() - 7);
 
-  //formato correcto
-  const fechaActual = fechaHoy.toISOString().split("T")[0];
-  const fechaSemana = fecha1semana.toISOString().split("T")[0];
+  const filteredSesiones = sesiones.filter((sesion) => {
+    const sesionFecha = new Date(sesion.fecha);
+    return sesionFecha >= fecha1semana && sesionFecha <= fechaHoy;
+  });
 
-  const listContainer = document.querySelector("#list-actividades");
-  listContainer.innerHTML = "";
-  isListPrinted = true;
-
-  for (let sesion of sesiones) {
-    const sesionFecha = sesion.fecha.split("T")[0];
-    if (sesion.fecha >= fechaSemana && sesion.fecha <= fechaActual) {
-      sesionesLastWeek.push(sesion);
-    }
-
-    for (const sesion of sesionesLastWeek) {
-      console.log(`Buscando nombre de actividad con ID: ${sesion.idActividad}`);
-      let actividadName = await getActividadName(sesion.idActividad);
-      console.log(`Actividad encontrada: ${actividadName}`);
-      console.log(`Buscando imagen de actividad con ID: ${sesion.idActividad}`);
-      let actividadImage = await getActividadImage(sesion.idActividad);
-      console.log(`Imagen encontrada: ${actividadImage}`);
-
-      const listItem = document.createElement("ion-item");
-      listItem.classList.add("activity-item");
-
-      listItem.innerHTML = `
-      <ion-thumbnail slot="start">
-        <img src="${actividadImage}" alt="Imagen de ${actividadName}">
-      </ion-thumbnail>
-      <ion-label>
-        <h2><strong>${actividadName}</strong></h2>
-        <p>Tiempo: ${sesion.tiempo}</p>
-        <p>Fecha: ${sesion.fecha}</p>
-      </ion-label>
-      <ion-button color="danger" fill="outline" slot="end" class="eliminar-btn" onclick="eliminarRegistro(${sesion.id})">
-        <ion-icon name="trash-outline"></ion-icon> 
-        <br>Eliminar<br>registro
-      </ion-button>
-    `;
-      listItem.setAttribute("data-id", sesion.id);
-      listContainer.appendChild(listItem);
-    }
-  }
+  await printRegisteredActivities(filteredSesiones);
 }
 
-async function lastMonth() {
-  let sesionesLastMonth = [];
-  const fechaHoy = new Date().toISOString().split("T")[0];
-  const fecha1mes = new Date();
-  fecha1mes.setDate(fechaHoy.getMonth() - 1);
+async function filterLastMonth() {
+  const fechaHoy = new Date();
+  const fecha1mes = new Date(fechaHoy);
+  fecha1mes.setMonth(fechaHoy.getMonth() - 1);
 
-  const fechaActual = fechaHoy.toISOString().split("T")[0];
-  const fechaMes = fecha1mes.toISOString().split("T")[0];
+  const filteredSesiones = sesiones.filter((sesion) => {
+    const sesionFecha = new Date(sesion.fecha);
+    return sesionFecha >= fecha1mes && sesionFecha <= fechaHoy;
+  });
 
-  for (let sesion of sesiones) {
-    if (sesion.fecha >= fechaMes && sesion.fecha <= fechaActual) {
-      sesionesLastMonth.push(sesion);
-    }
-
-    const listContainer = document.querySelector("#list-actividades");
-    listContainer.innerHTML = "";
-    isListPrinted = true;
-
-    for (const sesion of sesionesLastMonth) {
-      console.log(`Buscando nombre de actividad con ID: ${sesion.idActividad}`);
-      let actividadName = await getActividadName(sesion.idActividad);
-      console.log(`Actividad encontrada: ${actividadName}`);
-      console.log(`Buscando imagen de actividad con ID: ${sesion.idActividad}`);
-      let actividadImage = await getActividadImage(sesion.idActividad);
-      console.log(`Imagen encontrada: ${actividadImage}`);
-
-      const listItem = document.createElement("ion-item");
-      listItem.classList.add("activity-item");
-
-      listItem.innerHTML = `
-        <ion-thumbnail slot="start">
-          <img src="${actividadImage}" alt="Imagen de ${actividadName}">
-        </ion-thumbnail>
-        <ion-label>
-          <h2><strong>${actividadName}</strong></h2>
-          <p>Tiempo: ${sesion.tiempo}</p>
-          <p>Fecha: ${sesion.fecha}</p>
-        </ion-label>
-        <ion-button color="danger" fill="outline" slot="end" class="eliminar-btn" onclick="eliminarRegistro(${sesion.id})">
-          <ion-icon name="trash-outline"></ion-icon> 
-          <br>Eliminar<br>registro
-        </ion-button>
-      `;
-      listItem.setAttribute("data-id", sesion.id);
-      listContainer.appendChild(listItem);
-    }
-  }
+  await printRegisteredActivities(filteredSesiones);
 }
